@@ -1,0 +1,13 @@
+{
+  "name": "sessions-example-app",
+  "author": "Alan Plum <me@pluma.io>",
+  "version": "0.0.1",
+  "controllers": {
+    "/api": "index.js"
+  },
+  "defaultDocument": "index.html",
+  "setup": "setup.js",
+  "files": {
+    "/": "public"
+  }
+}
