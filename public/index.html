@@ -1,9 +1,58 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
-    <title></title>
+    <title>Foxx Session Example App</title>
+    <link rel="stylesheet" href="./app.css">
+    <link rel="stylesheet" href="./bootstrap.css">
+    <link rel="stylesheet" href="./bootstrap-theme.css">
   </head>
-  <body>
+  <body ng-app="example" ng-controller="MainCtrl as app" class="ng-cloak">
+    <div class="alert alert-danger" ng-if="app.error">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true" ng-click="app.removeError()">&times;</button>
+      <span class="glyphicon glyphicon-exclamation-sign"></span>
+      <strong>{{ app.error }}</strong>
+    </div>
+    <div class="container">
+      <div class="col-group">
+        <div class="col-sm-6" ng-if="app.user === undefined">
+          <div class="page-header">
+            <h1>Loading ...</h1>
+          </div>
+        </div>
+        <div class="col-sm-6" ng-if="app.user === null">
+          <div class="page-header">
+            <h1>Welcome stranger!</h1>
+          </div>
+          <form ng-submit="app.login()" role="form">
+            <div class="form-group">
+              <label for="username">Username:</label>
+              <input id="username" class="form-control" type="text" ng-model="app.credentials.username">
+            </div>
+            <div class="form-group">
+              <label for="password">Password:</label>
+              <input id="password" class="form-control" type="password" ng-model="app.credentials.password">
+            </div>
+            <button class="btn btn-primary">Login</button>
+          </form>
+        </div>
+        <div class="col-sm-6" ng-if="app.user">
+          <div class="page-header">
+            <h1>Hello {{ app.user.firstName }} {{ app.user.lastName }}!</h1>
+          </div>
+          <button class="btn btn-link" type="button" ng-click="app.logout()">Logout</button>
+        </div>
+        <div class="col-sm-6">
+          <div class="page-header">
+            <h1>Registered users</h1>
+          </div>
+          <ul>
+            <li ng-repeat="username in app.users">{{ username }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <script src="./angular.min.js"></script>
+    <script src="./app.js"></script>
   </body>
 </html>
