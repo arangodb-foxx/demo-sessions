@@ -22,8 +22,11 @@ controller.before('/*', function(req, res) {
   if (!session) {
     session = sessions.create();
   }
-  session.addCookie(res);
   req.session = session;
+});
+
+controller.after('/*', function(req, res) {
+  if (req.session) req.session.addCookie(res);
 });
 
 controller.get('/users', function(req, res) {
@@ -64,6 +67,8 @@ controller.post('/login', function(req, res) {
 controller.post('/logout', function(req, res) {
   var sessions = getSessionStorage();
   sessions.setUser(req.session.get('_key'), null);
+  sessions.delete(req.session.get('_key'));
+  req.session = sessions.create();
   res.json({success: true});
 })
 .summary('De-authenticate')
