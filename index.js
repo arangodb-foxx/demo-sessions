@@ -1,19 +1,18 @@
 'use strict';
 var Foxx = require('org/arangodb/foxx');
 var controller = new Foxx.Controller(applicationContext);
-var foxxApp = require('org/arangodb/foxx/manager').mountedApp;
 var Credentials = require('./models/credentials');
 
 function getAuthenticator() {
-  return foxxApp('/auth').auth;
+  return Foxx.requireApp('auth').auth;
 }
 
 function getUserStorage() {
-  return foxxApp('/users').userStorage;
+  return Foxx.requireApp('users').userStorage;
 }
 
 function getSessionStorage() {
-  return foxxApp('/sessions').sessionStorage;
+  return Foxx.requireApp('/sessions').sessionStorage;
 }
 
 controller.before('/*', function(req, res) {
