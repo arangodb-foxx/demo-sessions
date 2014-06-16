@@ -17,7 +17,7 @@ function getUserStorage() {
   return Foxx.requireApp('users').userStorage;
 }
 
-function NotAnAdmin() {};
+function NotAnAdmin() {}
 NotAnAdmin.prototype = new Error();
 
 function isAdmin(req) {
@@ -99,7 +99,7 @@ controller.get('/counter', function(req, res) {
 })
 .onlyIfAuthenticated()
 .summary('Get and increment a counter')
-.notes('Fetches the number of times this routes has been called in this session.')
+.notes('Fetches the number of times this routes has been called in this session.');
 
 /** Session dump
  *
