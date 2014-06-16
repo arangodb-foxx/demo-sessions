@@ -3,6 +3,12 @@ var Foxx = require('org/arangodb/foxx');
 var controller = new Foxx.Controller(applicationContext);
 var Credentials = require('./models/credentials');
 
+controller.activateAuthentication({
+  sessionStorageApp: 'sessions',
+  cookieName: 'sid',
+  type: 'cookie'
+});
+
 function getAuthenticator() {
   return Foxx.requireApp('auth').auth;
 }
@@ -11,48 +17,27 @@ function getUserStorage() {
   return Foxx.requireApp('users').userStorage;
 }
 
-function getSessionStorage() {
-  return Foxx.requireApp('/sessions').sessionStorage;
+function NotAnAdmin() {};
+NotAnAdmin.prototype = new Error();
+
+function isAdmin(req) {
+  var userData = req.session.get('userData');
+  if (!userData || !userData.admin) throw new NotAnAdmin();
 }
 
-controller.before('/*', function(req, res) {
-  var sessions = getSessionStorage();
-  var session = sessions.fromCookie(req);
-  if (!session) {
-    session = sessions.create();
-  }
-  req.session = session;
-});
-
-controller.after('/*', function(req, res) {
-  if (req.session) req.session.addCookie(res);
-});
-
-controller.get('/users', function(req, res) {
-  res.json({users: getUserStorage().list()});
-})
-.summary('Registered users')
-.notes('Returns a list of all known usernames.');
-
-
-controller.get('/whoami', function(req, res) {
-  if (!req.session.get('uid')) {
-    res.json({user: null});
-  } else {
-    res.json({user: req.session.get('userData') || {}});
-  }
-})
-.summary('Session user status')
-.notes('Returns the active user or null.');
-
+/** Login route
+ *
+ * Attempts to log the user in using username and password auth.
+ */
 controller.post('/login', function(req, res) {
-  var sid = req.session.get('_key');
-  var credentials = req.body();
-  var users = getUserStorage();
-  var auth = getAuthenticator();
-  var uid = users.resolve(credentials.username);
-  var user = auth.login(sid, uid, credentials.password);
+  var credentials = req.params('credentials');
+  var user = getAuthenticator().login(
+    req.session,
+    getUserStorage().resolve(credentials.get('username')),
+    credentials.get('password')
+  );
   if (user) {
+    req.session.save();
     res.json({success: true, user: user.get('userData')});
   } else {
     res.status(403);
@@ -63,12 +48,68 @@ controller.post('/login', function(req, res) {
 .summary('Authenticate')
 .notes('Attempts to log the user in with username and password.');
 
-controller.post('/logout', function(req, res) {
-  var sessions = getSessionStorage();
-  sessions.setUser(req.session.get('_key'), null);
-  sessions.delete(req.session.get('_key'));
-  req.session = sessions.create();
+/** Logout route
+ *
+ * Logs the user out by destroying their session. Always creates a new
+ * session to make sure cookies are overwritten.
+ */
+controller.logout('/logout', function(req, res) {
   res.json({success: true});
 })
 .summary('De-authenticate')
 .notes('Wipes the session data for the active session.');
+
+/** Registered user list
+ *
+ * Demonstrates fetching the list of usernames from the user storage.
+ */
+controller.get('/users', function(req, res) {
+  res.json({users: getUserStorage().list()});
+})
+.summary('Registered users')
+.notes('Returns a list of all known usernames.');
+
+/** Get current user
+ *
+ * If the user is logged in, returns the user's userData. Otherwise
+ * returns null for the userData.
+ */
+controller.get('/whoami', function(req, res) {
+  if (!req.session.get('uid')) {
+    res.json({user: null});
+  } else {
+    res.json({user: req.session.get('userData') || {}});
+  }
+})
+.summary('Session user status')
+.notes('Returns the active user or null.');
+
+/** Counter
+ *
+ * Demonstrates storing and updating a value in the session.
+ * Also shows how to restrict a route to logged-in users.
+ */
+controller.get('/counter', function(req, res) {
+  var sdata = req.session.get('sessionData');
+  if (sdata.counter) sdata.counter++;
+  else sdata.counter = 1;
+  req.session.set('sessionData', sdata);
+  req.session.save();
+  res.json({counter: sdata.counter});
+})
+.onlyIfAuthenticated()
+.summary('Get and increment a counter')
+.notes('Fetches the number of times this routes has been called in this session.')
+
+/** Session dump
+ *
+ * Dumps the content of the session object. Also demonstrates how to
+ * restrict a route to admin users.
+ */
+controller.get('/dump', function(req, res) {
+  res.json(req.session.forClient());
+})
+.onlyIf(isAdmin)
+.errorResponse(NotAnAdmin, 403, 'You are not an admin.')
+.summary('Dump session object')
+.notes('Returns the session object. Demonstrates restricting route access.');

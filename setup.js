@@ -10,4 +10,5 @@ var user = users.create({
   admin: true
 });
 
-auth.setPassword(user.get('_key'), 'admin');
+auth.setPassword(user, 'admin');
+user.save();
