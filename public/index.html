@@ -26,12 +26,12 @@
           </div>
           <form ng-submit="app.login()" role="form">
             <div class="form-group">
-              <label for="username">Username:</label>
-              <input id="username" class="form-control" type="text" ng-model="app.credentials.username">
+              <label for="login-username">Username:</label>
+              <input id="login-username" class="form-control" type="text" ng-model="app.loginData.username">
             </div>
             <div class="form-group">
-              <label for="password">Password:</label>
-              <input id="password" class="form-control" type="password" ng-model="app.credentials.password">
+              <label for="login-password">Password:</label>
+              <input id="login-password" class="form-control" type="password" ng-model="app.loginData.password">
             </div>
             <button class="btn btn-primary">Login</button>
           </form>
@@ -49,6 +49,25 @@
           <ul>
             <li ng-repeat="username in app.users">{{ username }}</li>
           </ul>
+          <form ng-if="app.user === null" ng-submit="app.register()" role="form">
+            <div class="form-group">
+              <label for="register-username">Username:</label>
+              <input id="register-username" class="form-control" type="text" ng-model="app.registerData.username">
+            </div>
+            <div class="form-group">
+              <label for="register-password">Password:</label>
+              <input id="register-password" class="form-control" type="password" ng-model="app.registerData.password">
+            </div>
+            <div class="form-group">
+              <label for="register-firstName">Vorname:</label>
+              <input id="register-firstName" class="form-control" type="text" ng-model="app.registerData.firstName">
+            </div>
+            <div class="form-group">
+              <label for="register-lastName">Nachname:</label>
+              <input id="register-lastName" class="form-control" type="text" ng-model="app.registerData.lastName">
+            </div>
+            <button class="btn btn-primary">Register</button>
+          </form>
         </div>
       </div>
     </div>

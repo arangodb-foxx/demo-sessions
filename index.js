@@ -2,6 +2,7 @@
 var Foxx = require('org/arangodb/foxx');
 var controller = new Foxx.Controller(applicationContext);
 var Credentials = require('./models/credentials');
+var UserProfile = require('./models/userProfile');
 
 controller.activateAuthentication({
   sessionStorageApp: 'sessions',
@@ -45,8 +46,31 @@ controller.post('/login', function(req, res) {
   }
 })
 .bodyParam('credentials', 'Authentication credentials.', Credentials)
-.summary('Authenticate')
+.summary('AuthenticuserProfile')
 .notes('Attempts to log the user in with username and password.');
+
+/** Registration route
+ *
+ * Demonstrates creating a new account and logging the user in manually.
+ */
+controller.post('/register', function(req, res) {
+  var credentials = req.params('credentials');
+  var userProfile = req.params('profile');
+  var userData = userProfile.forDB();
+  userData.username = credentials.get('username');
+  var users = getUserStorage();
+  var user = users.create(userData);
+  getAuthenticator().setPassword(user, credentials.get('password'));
+  user.save();
+  // now log the user in
+  req.session.setUser(user);
+  req.session.save();
+  res.json({success: true, user: user.get('userData'), users: users.list()});
+})
+.bodyParam('credentials', 'Username and password', Credentials)
+.bodyParam('profile', 'User profile data', UserProfile)
+.summary('Register')
+.notes('Create a new account and log the user in.');
 
 /** Logout route
  *
