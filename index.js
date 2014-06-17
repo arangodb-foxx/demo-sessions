@@ -74,7 +74,7 @@ controller.post('/register', function(req, res) {
 
 /** Logout route
  *
- * Logs the user out by destroying their session. Always creates a new
+ * Logs the user out by deleting their session. Always creates a new
  * session to make sure cookies are overwritten.
  */
 controller.logout('/logout', function(req, res) {
