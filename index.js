@@ -11,20 +11,10 @@ controller.activateAuthentication({
   type: 'cookie'
 });
 
-// Dream code:
-// controller.inject({
-//   auth: function() {return Foxx.requireApp('auth').auth;},
-//   userStorage: function() {return Foxx.requireApp('users').userStorage;}
-// });
-// controller.get('/foo', function(req, res) {this.auth.verifyPassword...});
-
-function getAuthenticator() {
-  return Foxx.requireApp('auth').auth;
-}
-
-function getUserStorage() {
-  return Foxx.requireApp('users').userStorage;
-}
+controller.inject({
+  auth: function() {return Foxx.requireApp('auth').auth;},
+  users: function() {return Foxx.requireApp('users').userStorage;}
+});
 
 function NotAnAdmin() {}
 NotAnAdmin.prototype = new Error();
@@ -40,8 +30,8 @@ function isAdmin(req) {
  */
 controller.post('/login', function(req, res) {
   var credentials = req.params('credentials');
-  var user = getUserStorage().resolve(credentials.get('username'));
-  var valid = getAuthenticator().verifyPassword(
+  var user = this.users.resolve(credentials.get('username'));
+  var valid = this.auth.verifyPassword(
     user ? user.get('authData') : {},
     credentials.get('password')
   );
@@ -67,15 +57,18 @@ controller.post('/register', function(req, res) {
   var userProfile = req.params('profile');
   var userData = userProfile.forDB();
   userData.username = credentials.get('username');
-  var users = getUserStorage();
-  var user = users.create(userData);
-  var authData = getAuthenticator().hashPassword(credentials.get('password'));
+  var user = this.users.create(userData);
+  var authData = this.auth.hashPassword(credentials.get('password'));
   user.set('authData', authData);
   user.save();
   // now log the user in
   req.session.setUser(user);
   req.session.save();
-  res.json({success: true, user: user.get('userData'), users: users.list()});
+  res.json({
+    success: true,
+    user: user.get('userData'),
+    users: this.users.list()
+  });
 })
 .bodyParam('credentials', 'Username and password', Credentials)
 .bodyParam('profile', 'User profile data', UserProfile)
@@ -98,7 +91,7 @@ controller.logout('/logout', function(req, res) {
  * Demonstrates fetching the list of usernames from the user storage.
  */
 controller.get('/users', function(req, res) {
-  res.json({users: getUserStorage().list()});
+  res.json({users: this.users.list()});
 })
 .summary('Registered users')
 .notes('Returns a list of all known usernames.');
