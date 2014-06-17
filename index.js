@@ -11,6 +11,13 @@ controller.activateAuthentication({
   type: 'cookie'
 });
 
+// Dream code:
+// controller.inject({
+//   auth: function() {return Foxx.requireApp('auth').auth;},
+//   userStorage: function() {return Foxx.requireApp('users').userStorage;}
+// });
+// controller.get('/foo', function(req, res) {this.auth.verifyPassword...});
+
 function getAuthenticator() {
   return Foxx.requireApp('auth').auth;
 }
@@ -33,12 +40,13 @@ function isAdmin(req) {
  */
 controller.post('/login', function(req, res) {
   var credentials = req.params('credentials');
-  var user = getAuthenticator().login(
-    req.session,
-    getUserStorage().resolve(credentials.get('username')),
+  var user = getUserStorage().resolve(credentials.get('username'));
+  var valid = getAuthenticator().verifyPassword(
+    user ? user.get('authData') : {},
     credentials.get('password')
   );
-  if (user) {
+  if (valid) {
+    req.session.setUser(user);
     req.session.save();
     res.json({success: true, user: user.get('userData')});
   } else {
@@ -52,7 +60,7 @@ controller.post('/login', function(req, res) {
 
 /** Registration route
  *
- * Demonstrates creating a new account and logging the user in manually.
+ * Demonstrates creating a new account.
  */
 controller.post('/register', function(req, res) {
   var credentials = req.params('credentials');
@@ -61,7 +69,8 @@ controller.post('/register', function(req, res) {
   userData.username = credentials.get('username');
   var users = getUserStorage();
   var user = users.create(userData);
-  getAuthenticator().setPassword(user, credentials.get('password'));
+  var authData = getAuthenticator().hashPassword(credentials.get('password'));
+  user.set('authData', authData);
   user.save();
   // now log the user in
   req.session.setUser(user);
@@ -115,7 +124,7 @@ controller.get('/whoami', function(req, res) {
  * Also shows how to restrict a route to logged-in users.
  */
 controller.get('/counter', function(req, res) {
-  var sdata = req.session.get('sessionData');
+  var sdata = req.session.get('sessionData') || {};
   if (sdata.counter) sdata.counter++;
   else sdata.counter = 1;
   req.session.set('sessionData', sdata);
