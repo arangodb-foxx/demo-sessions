@@ -7,6 +7,7 @@ var UserProfile = require('./models/userProfile');
 controller.activateAuthentication({
   sessionStorageApp: 'sessions',
   cookieName: 'sid',
+  cookieSecret: 'secret',
   type: 'cookie'
 });
 
