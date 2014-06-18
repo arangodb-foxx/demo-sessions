@@ -11,7 +11,7 @@ controller.activateAuthentication({
   type: 'cookie'
 });
 
-controller.inject({
+controller.addInjector({
   auth: function() {return Foxx.requireApp('auth').auth;},
   users: function() {return Foxx.requireApp('users').userStorage;}
 });
@@ -28,10 +28,10 @@ function isAdmin(req) {
  *
  * Attempts to log the user in using username and password auth.
  */
-controller.post('/login', function(req, res) {
+controller.post('/login', function(req, res, injected) {
   var credentials = req.params('credentials');
-  var user = this.users.resolve(credentials.get('username'));
-  var valid = this.auth.verifyPassword(
+  var user = injected.users.resolve(credentials.get('username'));
+  var valid = injected.auth.verifyPassword(
     user ? user.get('authData') : {},
     credentials.get('password')
   );
@@ -52,13 +52,13 @@ controller.post('/login', function(req, res) {
  *
  * Demonstrates creating a new account.
  */
-controller.post('/register', function(req, res) {
+controller.post('/register', function(req, res, injected) {
   var credentials = req.params('credentials');
   var userProfile = req.params('profile');
   var userData = userProfile.forDB();
   userData.username = credentials.get('username');
-  var user = this.users.create(userData);
-  user.set('authData', this.auth.hashPassword(credentials.get('password')));
+  var user = injected.users.create(userData);
+  user.set('authData', injected.auth.hashPassword(credentials.get('password')));
   user.save();
   // now log the user in
   req.session.setUser(user);
@@ -66,7 +66,7 @@ controller.post('/register', function(req, res) {
   res.json({
     success: true,
     user: user.get('userData'),
-    users: this.users.list()
+    users: injected.users.list()
   });
 })
 .bodyParam('credentials', 'Username and password', Credentials)
@@ -89,8 +89,8 @@ controller.logout('/logout', function(req, res) {
  *
  * Demonstrates fetching the list of usernames from the user storage.
  */
-controller.get('/users', function(req, res) {
-  res.json({users: this.users.list()});
+controller.get('/users', function(req, res, injected) {
+  res.json({users: injected.users.list()});
 })
 .summary('Registered users')
 .notes('Returns a list of all known usernames.');
