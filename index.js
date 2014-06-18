@@ -58,8 +58,7 @@ controller.post('/register', function(req, res) {
   var userData = userProfile.forDB();
   userData.username = credentials.get('username');
   var user = this.users.create(userData);
-  var authData = this.auth.hashPassword(credentials.get('password'));
-  user.set('authData', authData);
+  user.set('authData', this.auth.hashPassword(credentials.get('password')));
   user.save();
   // now log the user in
   req.session.setUser(user);
