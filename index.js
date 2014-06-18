@@ -45,7 +45,7 @@ controller.post('/login', function(req, res) {
   }
 })
 .bodyParam('credentials', 'Authentication credentials.', Credentials)
-.summary('AuthenticuserProfile')
+.summary('Authenticate')
 .notes('Attempts to log the user in with username and password.');
 
 /** Registration route
