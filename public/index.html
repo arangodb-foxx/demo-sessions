@@ -24,6 +24,14 @@
           <div class="page-header">
             <h1>Welcome stranger!</h1>
           </div>
+          <h2>OAuth2 Login</h2>
+          <form action="./api/oauth2/github/auth" method="POST">
+            <button class="btn btn-primary">Login with GitHub</button>
+          </form>
+          <form action="./api/oauth2/facebook/auth" method="POST">
+            <button class="btn btn-primary">Login with Facebook</button>
+          </form>
+          <h2>Local Login</h2>
           <form ng-submit="app.login()" role="form">
             <div class="form-group">
               <label for="login-username">Username:</label>
@@ -38,7 +46,16 @@
         </div>
         <div class="col-sm-6" ng-if="app.user">
           <div class="page-header">
-            <h1>Hello {{ app.user.firstName }} {{ app.user.lastName }}!</h1>
+            <h1>
+              Hello
+              <span ng-if="(!app.user.firstName || !app.user.lastName)">
+                <span ng-bind="app.user.username"></span>!
+              </span>
+              <span ng-if="!(!app.user.firstName || !app.user.lastName)">
+                <span ng-bind="app.user.firstName"></span>
+                <span ng-bind="app.user.lastName"></span>!
+              </span>
+            </h1>
           </div>
           <button class="btn btn-link" type="button" ng-click="app.logout()">Logout</button>
         </div>

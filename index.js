@@ -13,7 +13,8 @@ controller.activateAuthentication({
 
 controller.addInjector({
   auth: function() {return Foxx.requireApp('auth').auth;},
-  users: function() {return Foxx.requireApp('users').userStorage;}
+  users: function() {return Foxx.requireApp('users').userStorage;},
+  oauth2: function() {return Foxx.requireApp('oauth2').providers;}
 });
 
 function NotAnAdmin() {}
@@ -32,7 +33,7 @@ controller.post('/login', function(req, res, injected) {
   var credentials = req.params('credentials');
   var user = injected.users.resolve(credentials.get('username'));
   var valid = injected.auth.verifyPassword(
-    user ? user.get('authData') : {},
+    user ? user.get('authData').simple : {},
     credentials.get('password')
   );
   if (valid) {
@@ -48,17 +49,82 @@ controller.post('/login', function(req, res, injected) {
 .summary('Authenticate')
 .notes('Attempts to log the user in with username and password.');
 
+controller.post('/oauth2/:provider/auth', function(req, res, injected) {
+  var provider = injected.oauth2.get(req.params('provider'));
+  res.status(303);
+  res.set('location', provider.getAuthUrl(
+    'http://localhost:8529/_db/_system/sessions-example-app/api/oauth2/' +
+    provider.get('_key') + '/login',
+    {state: req.session.get('_key')}
+  ));
+});
+
+controller.get('/oauth2/:provider/login', function(req, res, injected) {
+  var provider = injected.oauth2.get(req.params('provider'));
+  if (req.params('error')) {
+    res.status(500);
+    res.json({success: false, error: req.params('error')});
+    return;
+  }
+  if (req.params('state') !== req.session.get('_key')) {
+    res.status(400);
+    res.json({success: false, error: 'CSRF mismatch'});
+    return;
+  }
+  try {
+    var authData = provider.exchangeGrantToken(
+      req.params('code'),
+      'http://localhost:8529/_db/_system/sessions-example-app/api/oauth2/' +
+      provider.get('_key') + '/login'
+    );
+    var profile = provider.fetchActiveUser(authData.access_token);
+    var username = provider.get('_key') + ':' + provider.getUsername(profile);
+    var userData = {username: username};
+    var uid = req.session.get('uid');
+    var user = injected.users.resolve(username);
+    if (!user) user = injected.users.create({username: username});
+    user.get('userData')['oauth2_' + provider.get('_key')] = profile;
+    user.get('authData')['oauth2_' + provider.get('_key')] = authData;
+    user.save();
+    req.session.setUser(user);
+    req.session.save();
+    res.status(303);
+    res.set('location', 'http://localhost:8529/_db/_system/sessions-example-app/');
+  } catch(err) {
+    res.status(500);
+    res.json({success: false, error: err.message});
+  }
+})
+.summary('')
+.notes('');
+
 /** Registration route
  *
  * Demonstrates creating a new account.
  */
 controller.post('/register', function(req, res, injected) {
   var credentials = req.params('credentials');
+  if (credentials.get('username').indexOf(':') !== -1) {
+    res.status(400);
+    res.json({
+      success: false,
+      error: 'Username must not contain a colon'
+    });
+    return;
+  }
   var userProfile = req.params('profile');
   var userData = userProfile.forDB();
   userData.username = credentials.get('username');
+  if (injected.users.resolve(userData.username)) {
+    res.status(400);
+    res.json({
+      success: false,
+      error: 'Username already taken'
+    });
+    return;
+  }
   var user = injected.users.create(userData);
-  user.set('authData', injected.auth.hashPassword(credentials.get('password')));
+  user.get('authData').simple = injected.auth.hashPassword(credentials.get('password'));
   user.save();
   // now log the user in
   req.session.setUser(user);

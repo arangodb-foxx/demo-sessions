@@ -10,5 +10,5 @@ var user = users.create({
   admin: true
 });
 
-user.set('authData', auth.hashPassword('admin'));
+user.get('authData').simple = auth.hashPassword('admin');
 user.save();
