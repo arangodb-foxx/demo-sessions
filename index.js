@@ -115,15 +115,20 @@ controller.post('/register', function(req, res, injected) {
   var userProfile = req.params('profile');
   var userData = userProfile.forDB();
   userData.username = credentials.get('username');
-  if (injected.users.resolve(userData.username)) {
-    res.status(400);
-    res.json({
-      success: false,
-      error: 'Username already taken'
-    });
-    return;
+  var user;
+  try {
+    user = injected.users.create(userData);
+  } catch (err) {
+    if (err instanceof injected.users.errors.UsernameAlreadyTaken) {
+      res.status(400);
+      res.json({
+        success: false,
+        error: 'Username already taken'
+      });
+      return;
+    }
+    throw err;
   }
-  var user = injected.users.create(userData);
   user.get('authData').simple = injected.auth.hashPassword(credentials.get('password'));
   user.save();
   // now log the user in
