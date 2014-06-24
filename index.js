@@ -49,18 +49,33 @@ controller.post('/login', function(req, res, injected) {
 .summary('Authenticate')
 .notes('Attempts to log the user in with username and password.');
 
+/** OAuth2 redirect
+ *
+ * Redirects the user to the authorization endpoint of the given provider.
+ */
 controller.post('/oauth2/:provider/auth', function(req, res, injected) {
-  var provider = injected.oauth2.get(req.params('provider'));
+  var provider = injected.oauth2.get(req.urlParameters.provider);
   res.status(303);
   res.set('location', provider.getAuthUrl(
     'http://localhost:8529/_db/_system/sessions-example-app/api/oauth2/' +
     provider.get('_key') + '/login',
     {state: req.session.get('_key')}
   ));
-});
+})
+.pathParam('provider', {
+  description: 'Provider _key.',
+  type: 'string'
+})
+.summary('OAuth2 authorization redirect')
+.notes('Redirects to the authorization endpoint of an OAuth2 provider.');
 
+
+/** OAuth2 callback
+ *
+ * An example for an OAuth2 callback.
+ */
 controller.get('/oauth2/:provider/login', function(req, res, injected) {
-  var provider = injected.oauth2.get(req.params('provider'));
+  var provider = injected.oauth2.get(req.urlParameters.provider);
   if (req.params('error')) {
     res.status(500);
     res.json({success: false, error: req.params('error')});
@@ -95,8 +110,12 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
     res.json({success: false, error: err.message});
   }
 })
-.summary('')
-.notes('');
+.pathParam('provider', {
+  description: 'Provider _key.',
+  type: 'string'
+})
+.summary('OAuth2 authorization callback')
+.notes('Redirect target for the OAuth2 authorization endpoint.');
 
 /** Registration route
  *
