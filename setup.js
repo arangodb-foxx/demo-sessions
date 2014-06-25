@@ -1,7 +1,7 @@
 'use strict';
 var Foxx = require('org/arangodb/foxx');
-var users = Foxx.requireApp('users').userStorage;
-var auth = Foxx.requireApp('auth').auth;
+var users = Foxx.requireApp('/_system/users').userStorage;
+var auth = Foxx.requireApp('/_system/simple-auth').auth;
 
 var user = users.create({
   username: 'admin',

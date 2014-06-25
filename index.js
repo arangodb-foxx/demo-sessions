@@ -4,17 +4,17 @@ var controller = new Foxx.Controller(applicationContext);
 var Credentials = require('./models/credentials');
 var UserProfile = require('./models/userProfile');
 
-controller.activateAuthentication({
-  sessionStorageApp: 'sessions',
+controller.activateSessions({
+  sessionStorageApp: '/_system/sessions',
   cookieName: 'sid',
   cookieSecret: 'secret',
   type: 'cookie'
 });
 
 controller.addInjector({
-  auth: function() {return Foxx.requireApp('auth').auth;},
-  users: function() {return Foxx.requireApp('users').userStorage;},
-  oauth2: function() {return Foxx.requireApp('oauth2').providers;}
+  auth: function() {return Foxx.requireApp('/_system/simple-auth').auth;},
+  users: function() {return Foxx.requireApp('/_system/users').userStorage;},
+  oauth2: function() {return Foxx.requireApp('/_system/oauth2').providers;}
 });
 
 function NotAnAdmin() {}
@@ -169,7 +169,7 @@ controller.post('/register', function(req, res, injected) {
  * Logs the user out by deleting their session. Always creates a new
  * session to make sure cookies are overwritten.
  */
-controller.logout('/logout', function(req, res) {
+controller.destroySession('/logout', function(req, res) {
   res.json({success: true});
 })
 .summary('De-authenticate')
