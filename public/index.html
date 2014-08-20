@@ -51,13 +51,8 @@
           <div class="page-header">
             <h1>
               Hello
-              <span ng-if="(!app.user.firstName || !app.user.lastName)">
-                <span ng-bind="app.user.username"></span>!
-              </span>
-              <span ng-if="!(!app.user.firstName || !app.user.lastName)">
-                <span ng-bind="app.user.firstName"></span>
-                <span ng-bind="app.user.lastName"></span>!
-              </span>
+              <span ng-bind="app.user.firstName"></span>
+              <span ng-bind="app.user.lastName"></span>!
             </h1>
           </div>
           <button class="btn btn-link" type="button" ng-click="app.logout()">Logout</button>

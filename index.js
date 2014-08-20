@@ -14,7 +14,7 @@ controller.activateSessions({
 controller.addInjector({
   auth: function() {return Foxx.requireApp('/_system/simple-auth').auth;},
   users: function() {return Foxx.requireApp('/_system/users').userStorage;},
-  oauth2: function() {return Foxx.requireApp('/_system/oauth2').providers;}
+  oauth2: function() {return Foxx.requireApp('/oauth2').providers;}
 });
 
 function NotAnAdmin() {}
@@ -94,10 +94,9 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
     );
     var profile = provider.fetchActiveUser(authData.access_token);
     var username = provider.get('_key') + ':' + provider.getUsername(profile);
-    var userData = {username: username};
     var uid = req.session.get('uid');
     var user = injected.users.resolve(username);
-    if (!user) user = injected.users.create({username: username});
+    if (!user) user = injected.users.create(username);
     user.get('userData')['oauth2_' + provider.get('_key')] = profile;
     user.get('authData')['oauth2_' + provider.get('_key')] = authData;
     user.save();
@@ -131,12 +130,12 @@ controller.post('/register', function(req, res, injected) {
     });
     return;
   }
-  var userProfile = req.params('profile');
-  var userData = userProfile.forDB();
-  userData.username = credentials.get('username');
   var user;
   try {
-    user = injected.users.create(userData);
+    user = injected.users.create(
+      credentials.get('username'),
+      req.params('profile').forDB()
+    );
   } catch (err) {
     if (err instanceof injected.users.errors.UsernameAlreadyTaken) {
       res.status(400);

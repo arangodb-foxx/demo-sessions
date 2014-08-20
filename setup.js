@@ -3,8 +3,7 @@ var Foxx = require('org/arangodb/foxx');
 var users = Foxx.requireApp('/_system/users').userStorage;
 var auth = Foxx.requireApp('/_system/simple-auth').auth;
 
-var user = users.create({
-  username: 'admin',
+var user = users.create('admin', {
   firstName: 'Admin',
   lastName: 'Admin',
   admin: true
