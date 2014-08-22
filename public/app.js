@@ -12,11 +12,13 @@ app.controller('MainCtrl', function($http, $timeout) {
   $http.get('./api/whoami')
   .success(function(res) {
     ctrl.user = res.user;
+    ctrl.uid = res.uid;
   });
 
   $http.get('./api/users')
   .success(function(res) {
     ctrl.users = res.users;
+    ctrl.uid = res.uid;
   });
 
   ctrl.removeError = function() {
@@ -29,6 +31,7 @@ app.controller('MainCtrl', function($http, $timeout) {
     .success(function(res) {
       ctrl.loginData = {};
       ctrl.user = res.user;
+      ctrl.uid = res.uid;
     })
     .error(function(res) {
       ctrl.error = res.error || 'Something went wrong!';
@@ -45,6 +48,7 @@ app.controller('MainCtrl', function($http, $timeout) {
       ctrl.registerData = {};
       ctrl.user = res.user;
       ctrl.users = res.users;
+      ctrl.uid = res.uid;
     })
     .error(function(res) {
       ctrl.error = res.error || 'Something went wrong!';
@@ -59,6 +63,7 @@ app.controller('MainCtrl', function($http, $timeout) {
     $http.post('./api/logout')
     .success(function(res) {
       ctrl.user = null;
+      ctrl.uid = null;
     })
     .error(function(res) {
       ctrl.error = res.error || 'Something went wrong!';

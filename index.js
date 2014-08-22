@@ -39,7 +39,7 @@ controller.post('/login', function(req, res, injected) {
   if (valid) {
     req.session.setUser(user);
     req.session.save();
-    res.json({success: true, user: user.get('userData')});
+    res.json({success: true, user: user.get('userData'), uid: req.session.get('uid')});
   } else {
     res.status(403);
     res.json({success: false, error: 'Invalid password or unknown username.'});
@@ -155,7 +155,8 @@ controller.post('/register', function(req, res, injected) {
   res.json({
     success: true,
     user: user.get('userData'),
-    users: injected.users.list()
+    users: injected.users.list(),
+    uid: req.session.get('uid')
   });
 })
 .bodyParam('credentials', 'Username and password', Credentials)
@@ -193,7 +194,7 @@ controller.get('/whoami', function(req, res) {
   if (!req.session.get('uid')) {
     res.json({user: null});
   } else {
-    res.json({user: req.session.get('userData') || {}});
+    res.json({user: req.session.get('userData') || {}, uid: req.session.get('uid')});
   }
 })
 .summary('Session user status')
