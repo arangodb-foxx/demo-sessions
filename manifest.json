@@ -6,7 +6,6 @@
     "/api": "index.js"
   },
   "defaultDocument": "index.html",
-  "setup": "setup.js",
   "files": {
     "/": "public"
   }
