@@ -6,9 +6,11 @@ var UserProfile = require('./models/userProfile');
 
 controller.activateSessions({
   sessionStorageApp: '/_system/sessions',
-  cookieName: 'sid',
-  cookieSecret: 'secret',
-  type: 'cookie'
+  type: 'cookie',
+  cookie: {
+    name: 'sid',
+    secret: 'secret'
+  }
 });
 
 controller.addInjector({
