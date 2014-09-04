@@ -52,7 +52,7 @@
             <h1>
               Hello
               <span ng-if="!app.user.firstName && !app.user.lastName">
-                User #<span ng-bind="app.uid"></span>
+                <span ng-bind="app.username"></span>
               </span>
               <span ng-if="app.user.firstName || app.user.lastName">
                 <span ng-bind="app.user.firstName"></span>

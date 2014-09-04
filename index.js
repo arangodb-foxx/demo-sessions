@@ -37,9 +37,10 @@ controller.post('/login', function(req, res, injected) {
     credentials.get('password')
   );
   if (valid) {
+    req.session.get('sessionData').username = user.get('user');
     req.session.setUser(user);
     req.session.save();
-    res.json({success: true, user: user.get('userData'), uid: req.session.get('uid')});
+    res.json({success: true, user: user.get('userData'), username: user.get('user')});
   } else {
     res.status(403);
     res.json({success: false, error: 'Invalid password or unknown username.'});
@@ -94,12 +95,12 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
     );
     var profile = provider.fetchActiveUser(authData.access_token);
     var username = provider.get('_key') + ':' + provider.getUsername(profile);
-    var uid = req.session.get('uid');
     var user = injected.users.resolve(username);
     if (!user) user = injected.users.create(username);
     user.get('userData')['oauth2_' + provider.get('_key')] = profile;
     user.get('authData')['oauth2_' + provider.get('_key')] = authData;
     user.save();
+    req.session.get('sessionData').username = user.get('user');
     req.session.setUser(user);
     req.session.save();
     res.status(303);
@@ -150,13 +151,14 @@ controller.post('/register', function(req, res, injected) {
   user.get('authData').simple = injected.auth.hashPassword(credentials.get('password'));
   user.save();
   // now log the user in
+  req.session.get('sessionData').username = user.get('user');
   req.session.setUser(user);
   req.session.save();
   res.json({
     success: true,
     user: user.get('userData'),
     users: injected.users.list(),
-    uid: req.session.get('uid')
+    username: user.get('user')
   });
 })
 .bodyParam('credentials', 'Username and password', Credentials)
@@ -192,9 +194,9 @@ controller.get('/users', function(req, res, injected) {
  */
 controller.get('/whoami', function(req, res) {
   if (!req.session.get('uid')) {
-    res.json({user: null});
+    res.json({user: null, username: ''});
   } else {
-    res.json({user: req.session.get('userData') || {}, uid: req.session.get('uid')});
+    res.json({user: req.session.get('userData') || {}, username: req.session.get('sessionData').username});
   }
 })
 .summary('Session user status')
