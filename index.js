@@ -57,6 +57,12 @@ controller.post('/login', function(req, res, injected) {
  * Redirects the user to the authorization endpoint of the given provider.
  */
 controller.post('/oauth2/:provider/auth', function(req, res, injected) {
+  if (! injected.oauth2) {
+    res.status(500);
+    res.json({success: false, error: "Expecting 'oauth2' provider to be available at mount point '/oauth2'. Please execute: require('org/arangodb/foxx/manager').install('oauth2', '/oauth2')."});
+    return;
+  }
+
   var provider = injected.oauth2.get(req.urlParameters.provider);
   res.status(303);
   res.set('location', provider.getAuthUrl(
