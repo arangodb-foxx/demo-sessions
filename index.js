@@ -3,6 +3,16 @@ var Foxx = require('org/arangodb/foxx');
 var controller = new Foxx.Controller(applicationContext);
 var Credentials = require('./models/credentials');
 var UserProfile = require('./models/userProfile');
+var url = require('url');
+
+function getBaseUrl(req) {
+  return url.format({
+    protocol: req.protocol,
+    hostname: req.server.address,
+    port: req.server.port,
+    pathname: '/_db/' + encodeURIComponent(req.database) + applicationContext.mount
+  });
+}
 
 controller.activateSessions({
   sessionStorageApp: '/_system/sessions',
@@ -177,13 +187,11 @@ controller.post('/oauth2/:provider/auth', function(req, res, injected) {
   }
   // This app expects the official OAuth2 app available at
   // https://github.com/arangodb/foxx-oauth2 to be mounted at `/oauth2`.
-  // It also expects the database to be listening on localhost port 8529
-  // and this example app to be mounted at `/sessions-example-app`.
 
   var provider = injected.oauth2.get(req.urlParameters.provider);
   res.status(303);
   res.set('location', provider.getAuthUrl(
-    'http://localhost:8529/_db/_system/sessions-example-app/api/oauth2/' +
+    getBaseUrl(req) + '/api/oauth2/' +
     provider.get('_key') + '/login',
     {state: req.session.get('_key')}
   ));
@@ -215,8 +223,7 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
   try {
     var authData = provider.exchangeGrantToken(
       req.params('code'),
-      'http://localhost:8529/_db/_system/sessions-example-app/api/oauth2/' +
-      provider.get('_key') + '/login'
+      getBaseUrl(req) + '/api/oauth2/' + provider.get('_key') + '/login'
     );
     var profile = provider.fetchActiveUser(authData.access_token);
     var username = provider.get('_key') + ':' + provider.getUsername(profile);
@@ -232,7 +239,7 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
     req.session.setUser(user);
     req.session.save();
     res.status(303);
-    res.set('location', 'http://localhost:8529/_db/_system/sessions-example-app/');
+    res.set('location', getBaseUrl(req) + '/');
   } catch(err) {
     res.status(500);
     res.json({success: false, error: err.message});
