@@ -99,7 +99,10 @@ controller.post('/login', function(req, res, injected) {
     res.json({success: false, error: 'Invalid password or unknown username.'});
   }
 })
-.bodyParam('credentials', 'Authentication credentials.', Credentials)
+.bodyParam('credentials', {
+  description: 'Authentication credentials.',
+  type: Credentials
+})
 .summary('Authenticate')
 .notes('Attempts to log the user in with username and password.');
 
@@ -156,8 +159,14 @@ controller.post('/register', function(req, res, injected) {
     username: user.get('user')
   });
 })
-.bodyParam('credentials', 'Username and password', Credentials)
-.bodyParam('profile', 'User profile data', UserProfile)
+.bodyParam('credentials', {
+  description: 'Username and password',
+  type: Credentials
+})
+.bodyParam('profile', {
+  description: 'User profile data', 
+  type: UserProfile
+})
 .summary('Register')
 .notes('Create a new account and log the user in.');
 
