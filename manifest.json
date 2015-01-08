@@ -1,11 +1,28 @@
 {
   "name": "sessions-example-app",
-  "author": "Alan Plum <me@pluma.io>",
+  "description": "Example application for Foxx sessions with password auth and OAuth2.",
+  "author": "ArangoDB GmbH",
   "version": "0.0.1",
+  "license": "Apache License, Version 2.0",
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arangodb/foxx-sessions-example.git"
+  },
+
+  "contributors": [
+    {
+      "name": "Alan Plum",
+      "email": "me@pluma.io"
+    }
+  ],
+
   "controllers": {
     "/api": "index.js"
   },
+
   "defaultDocument": "index.html",
+
   "files": {
     "/": "public"
   }
