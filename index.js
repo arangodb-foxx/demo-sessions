@@ -4,6 +4,7 @@ var controller = new Foxx.Controller(applicationContext);
 var Credentials = require('./models/credentials');
 var UserProfile = require('./models/userProfile');
 var url = require('url');
+var joi = require("joi");
 
 function getBaseUrl(req) {
   return url.format({
@@ -207,7 +208,7 @@ controller.post('/oauth2/:provider/auth', function(req, res, injected) {
 })
 .pathParam('provider', {
   description: 'Provider _key.',
-  type: 'string'
+  type: joi.string()
 })
 .summary('OAuth2 authorization redirect')
 .notes('Redirects to the authorization endpoint of an OAuth2 provider.');
@@ -256,7 +257,7 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
 })
 .pathParam('provider', {
   description: 'Provider _key.',
-  type: 'string'
+  type: joi.string()
 })
 .summary('OAuth2 authorization callback')
 .notes('Redirect target for the OAuth2 authorization endpoint.');
