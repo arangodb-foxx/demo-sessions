@@ -6,6 +6,11 @@ var UserProfile = require('./models/userProfile');
 var url = require('url');
 var joi = require('joi');
 
+// As of ArangoDB 2.5 other Foxx apps can be imported directly.
+var auth = Foxx.requireApp('/_system/simple-auth').auth;
+var users = Foxx.requireApp('/_system/users').userStorage;
+var oauth2 = Foxx.requireApp('/oauth2').providers;
+
 function getBaseUrl(req) {
   return url.format({
     protocol: req.protocol,
@@ -38,18 +43,6 @@ controller.activateSessions({
   // these must now be set when mounting the sessions app you want to use.
 });
 
-controller.addInjector({
-  auth: function() {return Foxx.requireApp('/_system/simple-auth').auth;},
-  users: function() {return Foxx.requireApp('/_system/users').userStorage;},
-  oauth2: function() {return Foxx.requireApp('/oauth2').providers;}
-  // ArangoDB 2.2 introduced exports and injectors. Here we're injecting the exported APIs
-  // of the built-in user and auth apps, as well as the official OAuth2 app into our
-  // controller. Like the built-in sessions app, a copy of the user and auth apps are
-  // automatically mounted at these mount points by ArangoDB. The OAuth2 app can be
-  // found at https://github.com/arangodb/foxx-oauth2 and should be mounted at `/oauth2`
-  // for this example app to work.
-});
-
 function NotAnAdmin() {}
 NotAnAdmin.prototype = new Error();
 
@@ -64,15 +57,12 @@ function isAdmin(req) {
  *
  * Attempts to log the user in using username and password auth.
  */
-controller.post('/login', function(req, res, injected) {
-  // The third parameter (`injected`) contains the values provided by our injectors
-  // above. For more information injectors see the section on Dependency Injection
-  // in the Foxx chapter of the documentation.
+controller.post('/login', function(req, res) {
   var credentials = req.params('credentials');
-  var user = injected.users.resolve(credentials.get('username'));
+  var user = users.resolve(credentials.get('username'));
   // The built-in users app provides a `resolve` method that fetches the user object
   // for a given username, or `null` if the user could not be found.
-  var valid = injected.auth.verifyPassword(
+  var valid = auth.verifyPassword(
     user ? user.get('authData').simple : {},
     credentials.get('password')
   );
@@ -111,7 +101,7 @@ controller.post('/login', function(req, res, injected) {
  *
  * Demonstrates creating a new account.
  */
-controller.post('/register', function(req, res, injected) {
+controller.post('/register', function(req, res) {
   var credentials = req.params('credentials');
   if (credentials.get('username').indexOf(':') !== -1) {
     // This is an example of arbitrary application-specific restrictions.
@@ -127,11 +117,11 @@ controller.post('/register', function(req, res, injected) {
   }
   var user;
   try {
-    user = injected.users.create(
+    user = users.create(
       credentials.get('username'),
       req.params('profile').forDB(),
       {
-        simple: injected.auth.hashPassword(credentials.get('password'))
+        simple: auth.hashPassword(credentials.get('password'))
       }
     );
     // The built-in users app provides a `create` method to create users.
@@ -139,7 +129,7 @@ controller.post('/register', function(req, res, injected) {
     // property, the last parameter will be stored as its `authData`.
     // Generally a user's `authData` should never leave the database.
   } catch (err) {
-    if (err instanceof injected.users.errors.UsernameAlreadyTaken) {
+    if (err instanceof users.errors.UsernameAlreadyTaken) {
       res.status(400);
       res.json({
         success: false,
@@ -156,7 +146,7 @@ controller.post('/register', function(req, res, injected) {
   res.json({
     success: true,
     user: user.get('userData'),
-    users: injected.users.list(),
+    users: users.list(),
     username: user.get('user')
   });
 })
@@ -189,8 +179,8 @@ controller.destroySession('/logout', function(req, res) {
  *
  * Redirects the user to the authorization endpoint of the given provider.
  */
-controller.post('/oauth2/:provider/auth', function(req, res, injected) {
-  if (!injected.oauth2) {
+controller.post('/oauth2/:provider/auth', function(req, res) {
+  if (!oauth2) {
     res.status(500);
     res.json({success: false, error: "Expecting 'oauth2' provider to be available at mount point '/oauth2'. Please execute: require('org/arangodb/foxx/manager').install('oauth2', '/oauth2')."});
     return;
@@ -198,7 +188,7 @@ controller.post('/oauth2/:provider/auth', function(req, res, injected) {
   // This app expects the official OAuth2 app available at
   // https://github.com/arangodb/foxx-oauth2 to be mounted at `/oauth2`.
 
-  var provider = injected.oauth2.get(req.urlParameters.provider);
+  var provider = oauth2.get(req.urlParameters.provider);
   res.status(303);
   res.set('location', provider.getAuthUrl(
     getBaseUrl(req) + '/api/oauth2/' +
@@ -215,8 +205,8 @@ controller.post('/oauth2/:provider/auth', function(req, res, injected) {
  *
  * An example for an OAuth2 callback.
  */
-controller.get('/oauth2/:provider/login', function(req, res, injected) {
-  var provider = injected.oauth2.get(req.urlParameters.provider);
+controller.get('/oauth2/:provider/login', function(req, res) {
+  var provider = oauth2.get(req.urlParameters.provider);
   if (req.params('error')) {
     res.status(500);
     res.json({success: false, error: req.params('error')});
@@ -237,8 +227,8 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
     // We want user objects created via OAuth2 to have their usernames prefixed with
     // the `_key` of the OAuth2 provider and a colon. This allows us to distinguish
     // them more easily.
-    var user = injected.users.resolve(username);
-    if (!user) user = injected.users.create(username);
+    var user = users.resolve(username);
+    if (!user) user = users.create(username);
     user.get('userData')['oauth2_' + provider.get('_key')] = profile;
     user.get('authData')['oauth2_' + provider.get('_key')] = authData;
     user.save();
@@ -260,8 +250,8 @@ controller.get('/oauth2/:provider/login', function(req, res, injected) {
  *
  * Demonstrates fetching the list of usernames from the user storage.
  */
-controller.get('/users', function(req, res, injected) {
-  res.json({users: injected.users.list()});
+controller.get('/users', function(req, res) {
+  res.json({users: users.list()});
 })
 .summary('Registered users')
 .notes('Returns a list of all known usernames.');
