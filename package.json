@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "lint": "jshint index.js public/app.js models/"
+  },
+  "devDependencies": {
+    "jshint": "^2.6.0"
+  }
+}
