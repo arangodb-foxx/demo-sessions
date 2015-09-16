@@ -14,6 +14,9 @@
       "email": "me@pluma.io"
     }
   ],
+  "engines": {
+    "arangodb": "<2.7.0"
+  }
   "controllers": {
     "/api": "index.js"
   },
