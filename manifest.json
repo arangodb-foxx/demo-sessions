@@ -1,5 +1,5 @@
 {
-  "name": "sessions-example-app",
+  "name": "demo-sessions",
   "description": "Example application for Foxx sessions with password auth and OAuth2.",
   "author": "ArangoDB GmbH",
   "version": "1.2.0",
