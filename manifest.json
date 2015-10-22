@@ -4,6 +4,9 @@
   "author": "ArangoDB GmbH",
   "version": "1.2.0",
   "license": "Apache License, Version 2.0",
+  "engines": {
+    "arangodb": "~2.7.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/arangodb/foxx-sessions-example.git"
@@ -14,8 +17,24 @@
       "email": "me@pluma.io"
     }
   ],
-  "engines": {
-    "arangodb": "<2.7.0"
+  "dependencies": {
+    "users": "util-users-local:~3.0.0",
+    "auth": "util-simple-auth:~2.0.0",
+    "github": {
+      "name": "util-oauth2",
+      "version": "~2.0.0",
+      "required": false
+    },
+    "facebook": {
+      "name": "util-oauth2",
+      "version": "~2.0.0",
+      "required": false
+    },
+    "google": {
+      "name": "util-oauth2",
+      "version": "~2.0.0",
+      "required": false
+    }
   },
   "controllers": {
     "/api": "index.js"
