@@ -2,7 +2,7 @@
   "name": "demo-sessions",
   "description": "Example application for Foxx sessions with password auth and OAuth2.",
   "author": "ArangoDB GmbH",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "license": "Apache License, Version 2.0",
   "engines": {
     "arangodb": "~2.7.0"
